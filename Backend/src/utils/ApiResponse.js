@@ -10,3 +10,5 @@ class ApiResponse {
         this.success = statusCode < 500;
     }
 }
+
+export { ApiResponse };
