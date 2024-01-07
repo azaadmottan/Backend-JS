@@ -187,8 +187,8 @@ const logoutUser = asyncHandler( async (req, res) => {
         
         req.user._id, 
         {
-            $set: {
-                refreshToken: undefined,
+            $unset: {
+                refreshToken: 1,    // the $unset operator is used to remove a specified field from a document. It is part of the update operators and is employed in update operations to unset or delete a particular field.
             }
         },
         {
