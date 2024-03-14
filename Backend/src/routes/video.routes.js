@@ -1,13 +1,13 @@
 import express from 'express';
 import { upload }  from "../middlewares/multer.middleware.js";
 import { verifyJWT }  from "../middlewares/auth.middleware.js";
-import { publishVideo } from '../controllers/video.controllers.js';
+import { getAllVideos, publishVideo } from '../controllers/video.controllers.js';
 
 const router = express.Router();
 
 // route for publishing video
 
-router.route("/").post(verifyJWT, upload.fields(
+router.route("/").get(getAllVideos).post(verifyJWT, upload.fields(
     [ 
         {
             name: "videoFile",
