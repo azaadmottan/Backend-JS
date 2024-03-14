@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadOnCloudinary }  from "../utils/cloudinary.js"
+import { deleteOnCloudinary, uploadOnCloudinary }  from "../utils/cloudinary.js"
 import { Video } from "../models/video.model.js";
 import mongoose, { isValidObjectId } from "mongoose";
 
@@ -158,7 +158,76 @@ const getAllVideos = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, videos, "Videos fetched successfully"));
 });
 
+// update video details like title, description and thumbnail
+
+const updateVideo = asyncHandler(async (req, res) => {
+
+    const { title, description } = req.body;
+    const { videoId } = req.params;
+    
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId");
+    }
+
+    if (!(title && description)) {
+        throw new ApiError(400, "Title and description are required");
+    }
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (video?.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(400, "You don't have permission to update this video");
+    }
+
+    const oldThumbnailId = video.thumbnail.public_id;
+    const newThumbnailLocalPath = req.file?.path;
+
+    if (!newThumbnailLocalPath) {
+        throw new ApiError(400, "Thumbnail File is required.");
+    }
+
+    const newThumbnail = await uploadOnCloudinary(newThumbnailLocalPath);
+
+    if (!newThumbnail) {
+        throw new ApiError(400, "Thumbnail not found");
+    }
+
+    const updateVideoDetails = await Video.findByIdAndUpdate(
+        videoId, 
+        {
+            $set: {
+                title,
+                description,
+                thumbnail: {
+                    url: newThumbnail.url,
+                    public_id: newThumbnail.public_id
+                }
+            }
+        }, 
+        {
+            new: true
+        }
+    );
+
+    if (!updateVideoDetails) {
+        throw new ApiError(500, "Failed to update video details");
+    }
+
+    if (updateVideoDetails) {
+        await deleteOnCloudinary(oldThumbnailId);
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updateVideoDetails, "Video details updated successfully"));
+});
+
+
 export {
     publishVideo,
-    getAllVideos
+    getAllVideos,
+    updateVideo
 }
