@@ -1,7 +1,7 @@
 import express from 'express';
 import { upload }  from "../middlewares/multer.middleware.js";
 import { verifyJWT }  from "../middlewares/auth.middleware.js";
-import { getAllVideos, publishVideo, updateVideo } from '../controllers/video.controllers.js';
+import { getAllVideos, publishVideo, toggleVideoPublishStatus, updateVideo } from '../controllers/video.controllers.js';
 
 const router = express.Router();
 
@@ -25,4 +25,9 @@ router.route("/").get(getAllVideos).post(verifyJWT, upload.fields(
 router.route("/v/:videoId")
     .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
 
+// toggle publish status of the video
+
+router.route("/toggle/publish/:videoId")
+    .patch(verifyJWT, toggleVideoPublishStatus);
+    
 export default router;
