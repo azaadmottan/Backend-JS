@@ -1,7 +1,13 @@
 import express from 'express';
 import { upload }  from "../middlewares/multer.middleware.js";
 import { verifyJWT }  from "../middlewares/auth.middleware.js";
-import { getAllVideos, publishVideo, toggleVideoPublishStatus, updateVideo } from '../controllers/video.controllers.js';
+import { 
+    deleteVideo, 
+    getAllVideos, 
+    publishVideo, 
+    toggleVideoPublishStatus, 
+    updateVideo 
+} from '../controllers/video.controllers.js';
 
 const router = express.Router();
 
@@ -23,7 +29,8 @@ router.route("/").get(getAllVideos).post(verifyJWT, upload.fields(
 // route for update video details
 
 router.route("/v/:videoId")
-    .patch(verifyJWT, upload.single("thumbnail"), updateVideo);
+    .patch(verifyJWT, upload.single("thumbnail"), updateVideo)
+    .delete(verifyJWT, deleteVideo);
 
 // toggle publish status of the video
 

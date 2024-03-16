@@ -267,9 +267,49 @@ const toggleVideoPublishStatus = asyncHandler(async (req, res) => {
 
 });
 
+// delete video including likes and comments
+
+const deleteVideo = asyncHandler(async (req, res) => {
+
+    const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (video?.owner.toString() !== req.user?._id.toString()) {
+        throw new ApiError(400, "You don't have permission to delete this video");
+    }
+
+    const videoDeleted = await Video.findByIdAndDelete(video?._id);
+
+    if (!videoDeleted) {
+        throw new ApiError(400, "Failed to delete video");
+    }
+
+    await deleteOnCloudinary(video.thumbnail.public_id);
+    await deleteOnCloudinary(video.videoFile.public_id, "video");   // specify 'video' while deleting video file (type of the file)
+
+    // TODO delete likes also
+
+    // TODO delete comments also
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Video deleted successfully"));
+});
+
+
 export {
     publishVideo,
     getAllVideos,
     updateVideo,
-    toggleVideoPublishStatus
+    toggleVideoPublishStatus,
+    deleteVideo
 }
