@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { deleteOnCloudinary, uploadOnCloudinary }  from "../utils/cloudinary.js"
 import { Video } from "../models/video.model.js";
+import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
 import mongoose, { isValidObjectId } from "mongoose";
 
 // get video & tumbnail file, upload to cloudinary and create video & thumbnail.
@@ -296,9 +298,15 @@ const deleteVideo = asyncHandler(async (req, res) => {
     await deleteOnCloudinary(video.thumbnail.public_id);
     await deleteOnCloudinary(video.videoFile.public_id, "video");   // specify 'video' while deleting video file (type of the file)
 
-    // TODO delete likes also
+    // delete likes also
+    await Like.deleteMany({
+        video: videoId
+    });
 
-    // TODO delete comments also
+    // delete comments also
+    await Comment.deleteMany({
+        video: videoId
+    });
 
     return res
         .status(200)
