@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiResponse }  from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Tweet } from "../models/tweet.model.js";
+import { Like } from "../models/like.model.js";
 
 // create tweet
 
@@ -26,6 +27,46 @@ const createTweet = asyncHandler(async (req, res) => {
     return res
         .status(201)
         .json(new ApiResponse(201, tweet, "Tweet created successfully"));
+});
+
+// toggle tweet like
+
+const toggleTweetLike = asyncHandler(async (req, res) => {
+
+    const { tweetId } = req.params;
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid tweetId");
+    }
+
+    const tweet = await Tweet.findById(tweetId);
+
+    if (!tweet) {
+        throw new ApiError(404, "Tweet not found");
+    }
+
+    const isLikedTweet = await Like.findOne({
+        tweet: tweetId,
+        likedBy: req.user?._id
+    });
+
+    if (isLikedTweet) {
+
+        await Like.findByIdAndDelete(isLikedTweet?._id);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { isLiked: false, tweet: tweetId, likedBy: req.user?._id }, "Remove tweet like" ));
+    }
+
+    await Like.create({ 
+        tweet: tweetId, 
+        likedBy: req.user?._id 
+    });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { isLiked: true, tweet: tweetId, likedBy: req.user?._id }, "Add tweet like"));
 });
 
 // update tweet
@@ -194,6 +235,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
 export {
     createTweet,
+    toggleTweetLike,
     updateTweet,
     getUserTweets,
     deleteTweet,
